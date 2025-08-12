@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kuis Pembelajaran SMA Kelas 10</title>
+    <!-- Memuat Tailwind CSS untuk styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+        body {
+            font-family: 'Inter', sans-serif;
+            transition: background-color 0.3s ease;
+        }
+
+        .btn-primary {
+            transition: all 0.2s ease-in-out;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 8px rgba(0, 0, 0, 0.15);
+        }
+
+        .quiz-card {
+            background-color: #ffffff;
+            border-radius: 12px;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            padding: 2.5rem;
+        }
+
+        .correct-answer {
+            background-color: #d1fae5 !important;
+            color: #065f46 !important;
+            border: 2px solid #34d399;
+        }
+
+        .incorrect-answer {
+            background-color: #fee2e2 !important;
+            color: #991b1b !important;
+            border: 2px solid #ef4444;
+        }
+
+        /* Animasi untuk feedback */
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .fade-in {
+            animation: fadeIn 0.5s ease-in-out;
+        }
+    </style>
+    <!-- Memuat MathJax untuk render formula matematika -->
+    <script>
+        MathJax = {
+            tex: {
+                inlineMath: [['$', '$'], ['\\(', '\\)']]
+            },
+            svg: {
+                fontCache: 'global'
+            }
+        };
+    </script>
+    <script type="text/javascript" id="MathJax-script" async
+        src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js">
+        </script>
+</head>
+
+<body class="bg-gray-50 text-gray-800 flex flex-col min-h-screen">
+
+    <!-- Header -->
+    <header class="bg-gradient-to-r from-blue-600 to-purple-600 text-white p-6 shadow-lg">
+        <div class="container mx-auto flex justify-between items-center">
+            <div class="text-3xl font-bold">LevelUp</div>
+            <nav class="flex items-center space-x-4">
+                <span id="usernameDisplay" class="text-lg hidden"></span>
+                <button id="logoutButton"
+                    class="bg-white text-blue-600 font-semibold px-4 py-2 rounded-full hover:bg-gray-100 transition-colors hidden"
+                    onclick="logout()">Keluar</button>
+            </nav>
+        </div>
+    </header>
+
+    <main class="flex-grow container mx-auto p-6 flex flex-col items-center justify-center">
+        <!-- Area Selamat Datang - Masuk Username -->
+        <div id="loginArea" class="quiz-card w-full max-w-xl text-center">
+            <img src="logo.jpeg" alt="Logo Selamat Datang"
+                class="rounded-full mx-auto mb-6 w-24 h-24 object-cover">
+            <h1 class="text-3xl font-bold mb-4 text-gray-900">Selamat datang di LevelUp!</h1>
+            <p class="text-lg mb-6 text-gray-600">Masukkan nama panggilanmu untuk memulai.</p>
+            <input type="text" id="usernameInput" placeholder="Contoh: Budi"
+                class="w-full border-2 border-gray-300 rounded-lg p-3 mb-4 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all">
+            <button id="startButton" onclick="masukAplikasi()"
+                class="btn-primary w-full bg-blue-600 text-white font-semibold py-4 px-6 rounded-lg shadow-md hover:bg-blue-700">
+                Mulai Kuis
+            </button>
+        </div>
+
+        <!-- Area Pilihan Mata Pelajaran (Tersembunyi secara default) -->
+        <div id="subjectArea" class="quiz-card w-full max-w-xl text-center hidden">
+            <img src="http://googleusercontent.com/file_content/5" alt="Logo Selamat Datang"
+                class="rounded-full mx-auto mb-6 w-24 h-24 object-cover">
+            <h1 id="greetingText" class="text-3xl font-bold mb-4 text-gray-900"></h1>
+            <p class="text-lg mb-6 text-gray-600">Ingin belajar apa hari ini?</p>
+            <div class="flex flex-col space-y-4">
+                <button onclick="gantiMapel('matematika')"
+                    class="btn-primary bg-blue-500 hover:bg-blue-600 text-white font-semibold py-4 px-6 rounded-lg shadow-md">
+                    🔢 Matematika
+                </button>
+                <button onclick="gantiMapel('biologi')"
+                    class="btn-primary bg-green-500 hover:bg-green-600 text-white font-semibold py-4 px-6 rounded-lg shadow-md">
+                    🧬 Biologi
+                </button>
+                <button onclick="gantiMapel('bahasa_inggris')"
+                    class="btn-primary bg-purple-500 hover:bg-purple-600 text-white font-semibold py-4 px-6 rounded-lg shadow-md">
+                    📖 Bahasa Inggris
+                </button>
+            </div>
+        </div>
+
+        <!-- Area Kuis (Tersembunyi secara default) -->
+        <div id="kuisArea" class="quiz-card w-full max-w-2xl hidden">
+            <!-- Statistik di bagian atas -->
+            <div class="grid grid-cols-3 gap-4 mb-6 text-center">
+                <div class="p-4 bg-gray-100 rounded-lg">
+                    <p class="text-xs font-semibold uppercase text-gray-500">Soal Dikerjakan</p>
+                    <p id="totalSoalDikerjakan" class="text-2xl font-bold mt-1 text-gray-900">0</p>
+                </div>
+                <div class="p-4 bg-gray-100 rounded-lg">
+                    <p class="text-xs font-semibold uppercase text-gray-500">Jawaban Benar</p>
+                    <p id="jawabanBenar" class="text-2xl font-bold mt-1 text-green-600">0</p>
+                </div>
+                <div class="p-4 bg-gray-100 rounded-lg">
+                    <p class="text-xs font-semibold uppercase text-gray-500">Akurasi</p>
+                    <p id="akurasi" class="text-2xl font-bold mt-1 text-blue-600">0%</p>
+                </div>
+            </div>
+
+            <!-- Konten Soal -->
+            <h2 id="soal" class="text-xl font-semibold mb-6 text-gray-900">Soal akan muncul di sini</h2>
+            <div id="inputContainer" class="mb-4"></div>
+            <div id="feedback" class="text-sm font-medium"></div>
+
+            <!-- Tombol "Berikutnya" -->
+            <button id="btnNext" onclick="soalBerikutnya()"
+                class="btn-primary bg-gray-500 text-white font-semibold py-3 px-6 rounded-lg shadow-md mt-6 hidden hover:bg-gray-600">
+                Soal Berikutnya
+            </button>
+        </div>
+
+        <!-- Area Hasil Akhir (Tersembunyi secara default) -->
+        <div id="hasilAkhir" class="quiz-card w-full max-w-xl text-center hidden">
+            <h2 class="text-3xl font-bold mb-4 text-gray-900">🎉 Kuis Selesai!</h2>
+            <p id="hasilText" class="text-xl mb-6 text-gray-700">Skor kamu: 0 dari 0 soal.</p>
+            <button onclick="kembaliKePilihan()"
+                class="btn-primary bg-blue-600 text-white font-semibold py-3 px-6 rounded-lg shadow-md hover:bg-blue-700">
+                Kembali ke Pilihan
+            </button>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-white mt-auto p-4 text-center text-gray-500 text-sm border-t border-gray-200">
+        &copy; 2025 LevelUp. All rights reserved.
+    </footer>
+
+    <!-- Memuat file JavaScript -->
+    <script src="soal_bank_kelas10.js"></script>
+    <script src="script.js"></script>
+
+</body>
+
+</html>
